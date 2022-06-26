@@ -1,59 +1,46 @@
 import express from "express";
+import fs from "fs";
+import fsAsync from "fs/promises";
+
 const app = express();
 
-// app.get("/sky/:id", (req, res, next) => {
-//   // console.log(req.path);
-//   // console.log(req.headers);
-//   console.log(req.params);
-//   // localhost:8080/sky/eommoonjoo
-//   console.log(req.query);
-//   // localhost:8080/sky/eommoonjoo/?keyword=bts
-//   // res.send("hi");
+app.use(express.json()); // request body에서 json으로 받기위해서 사용하는 미들웨어
 
-//   // res.json({ name: "Ellie" });
-//   // res.sendStatus(400);
-//   res.setHeader("key", "value");
-//   res.status(201).send("created");
-// });
+app.get("/file1", (req, res) => {
+  // try {
+  //   const data = fs.readFileSync("/file.txt");
+  // } catch (error) {
+  //   res.status(404).send("404 File not found");
+  // }
 
-app.all("/api", (req, res, next) => {
-  console.log("all");
-  next();
+  //try catch문은 동기일 때만 에러처리가 가능하고, 비동기일 때는 아무리 해도 처리가 되지 않는다.
+
+  fs.readFile("/file1.txt", (err, data) => {
+    if (err) {
+      res.status(404).send("File not found");
+    }
+  }); //비동기로 처리할 때는 에러를 자체적으로 처리를 해줘야 한다. 왜냐하면, 함수를 실행한것은 맞고, 그게 언제 올지 모르는 상태이니, error를 던져야 할 지, 말 지를 모르는거지...
 });
 
-//all 은 /api에서만 작동하는데, use같은 경우에는 /sky/asb/dfasd 이렇게 해도 작동함
-
-app.use("/sky", (req, res, next) => {
-  console.log("use");
-  next();
+app.get("/file2", (req, res, next) => {
+  fsAsync
+    .readFile("/file.txt")
+    .catch((error) => res.status(404).send("File not found"));
 });
 
-app.get(
-  "/",
-  (req, res, next) => {
-    console.log("first");
-    // next("route");
-    // next(new Error("error"));
-    res.send("Hello");
-    // route로 하게 되면 first2 가 아니라 second로 바로 넘어감
-  },
-  (req, res, next) => {
-    console.log("firs2");
-    next();
+app.get("/file3", async (req, res) => {
+  try {
+    const data = await fsAsync.readFile("/file.txt");
+  } catch (error) {
+    res.status(404).send("File not found -3 ");
   }
-);
-
-app.get("/", (req, rees, next) => {
-  console.log("second");
 });
 
-app.use((req, res, next) => {
-  res.status(404).send("Not available");
-});
 app.use((error, req, res, next) => {
   console.error(error);
-  res.status(500).send("Sorry, try, later!");
+  res.status(500).json({ message: "관리자에게 문의해주세요" });
 });
+
 app.listen(8080);
 
 //API reference
